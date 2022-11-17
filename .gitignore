@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+.project
+.pydevproject
+*.so
+.eggs
+.idea
+*egg-info
