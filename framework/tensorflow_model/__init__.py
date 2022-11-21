@@ -157,8 +157,6 @@ def create_NNC_model_instance_from_object(
                  model_struct=None,
                  model_name=None
                 ):
-    
-    model_name = model_object.name
 
     TEFModel = TensorFlowModel()
     model_parameters, loaded_model_struct = TEFModel.init_model_from_model_object(model_object)
@@ -258,23 +256,6 @@ class TensorFlowModel(nnc_core.nnr_model.NNRModel):
                 model_parameter_dict = {}
                 for name in layer_names:
                     model_parameter_dict[name] = model_file[name]
-                
-                else:
-                    if 'layer_names' in model_file.attrs:
-                        module_names = [n.decode('utf8') for n in model_file.attrs['layer_names']]
-
-                    layer_names = []
-                    for mod_name in module_names:
-                        layer = model_file[mod_name]
-                        if 'weight_names' in layer.attrs:
-                            weight_names = [mod_name+'/'+n.decode('utf8') for n in layer.attrs['weight_names']]
-                            if weight_names:
-                                layer_names += weight_names
-
-                    model_parameter_dict = {}
-                    for name in layer_names:
-                        model_parameter_dict[name] = model_file[name]
-
         except:
             raise SystemExit("Can't read model: {}".format(model_path))
 

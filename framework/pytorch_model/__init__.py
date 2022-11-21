@@ -573,6 +573,9 @@ class ImageNetPytorchModelExecuter( nnc_core.nnr_model.ModelExecute):
                    model_dict[module_name] = model_dict[module_name].reshape(base_model_arch[module_name].shape)
         self.model.load_state_dict(model_dict)
 
+        for param in parameters:
+            parameters[param] = copy.deepcopy(self.model.state_dict()[param])
+
         tuning_params = []
         for name, param in self.model.named_parameters():
             if lsa_flag and ft_flag and param_types[name] in nnc_core.nnr_model.O_TYPES:

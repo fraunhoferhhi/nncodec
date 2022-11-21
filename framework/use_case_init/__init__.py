@@ -109,9 +109,25 @@ class ModelSetting:
         return val_set, val_loader
 
     def init_test_tef(self, dataset_path, batch_size, num_workers, model_name):
-        val_set = self.dataset(
+        test_set = self.dataset(
             root=dataset_path,
             split='test'
+        )
+        self.__model_name = model_name
+
+        test_images, test_labels = zip(*test_set.imgs)
+        test_loader = tf.data.Dataset.from_tensor_slices((list(test_images), list(test_labels)))
+        test_loader = test_loader.map(lambda image, label: tf.py_function(self.preprocess,
+                                                                              inp=[image, label],
+                                                                              Tout=[tf.float32, tf.int32]), num_parallel_calls=num_workers).batch(
+                                                                                batch_size)
+
+        return test_set, test_loader
+
+    def init_validation_tef(self, dataset_path, batch_size, num_workers, model_name):
+        val_set = self.dataset(
+            root=dataset_path,
+            split='val'
         )
         self.__model_name = model_name
 
@@ -123,22 +139,6 @@ class ModelSetting:
                                                                                 batch_size)
 
         return val_set, val_loader
-
-    def init_validation_tef(self, dataset_path, batch_size, num_workers, model_name):
-        test_set = self.dataset(
-            root=dataset_path,
-            split='val'
-        )
-        self.__model_name = model_name
-
-        val_images, val_labels = zip(*test_set.imgs)
-        test_loader = tf.data.Dataset.from_tensor_slices((list(val_images), list(val_labels)))
-        test_loader = test_loader.map(lambda image, label: tf.py_function(self.preprocess,
-                                                                              inp=[image, label],
-                                                                              Tout=[tf.float32, tf.int32]), num_parallel_calls=num_workers).batch(
-                                                                                batch_size)
-
-        return test_set, test_loader
 
     
     def preprocess(
