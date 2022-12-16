@@ -232,6 +232,9 @@ def compress_model( model_path_or_object,
             if model_executer:
                 model_executer.model = model_executer.original_model
                 del model_executer.original_model
+            for key in model_parameters.keys():
+                if "weight_scaling" in key:
+                    del model_parameters[key]
             
 
     bitstream = compress(   model_parameters,
