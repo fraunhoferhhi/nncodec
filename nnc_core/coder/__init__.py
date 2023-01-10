@@ -428,7 +428,7 @@ def __decode_nnr_ndu_unit(nnr_gen, reader, bitstream, ndu, mps, lps, tpl, model_
                 approx_data["codebooks_egk"][param]         = ndu["codebook_egk__"]                       
             elif(
                  (ndu["nnr_compressed_data_unit_payload_type"] != hls.CompressedDataUnitPayloadType.NNR_PT_BLOCK) and
-                 (ndu["codebook_present_flag"] == 1)
+                 (ndu.get("codebook_present_flag") == 1)
             ): 
                 approx_data["approx_method"][param]         = 'codebook'
                 approx_data["codebooks"][param]             = ndu["codebook__"]

@@ -481,7 +481,7 @@ def run_ft_and_lsa(model_info, approx_data, ap_info, model_executer, block_id_an
 def approx(approx_info, model_info, approx_data, param_opt=0):
     approx_method = approx_info['approx_method']
     
-    integer.skip_approx( approx_info, model_info, approx_data )
+    approx_data = integer.skip_approx( approx_info, model_info, approx_data )
 
     if approx_method == 'codebook':
         approx_data, approx_info = codebook.approx(approx_info, model_info, approx_data, param_opt)

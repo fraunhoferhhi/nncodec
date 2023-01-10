@@ -69,6 +69,9 @@ def decode( decoder, approx_data, param, ndu, mps, lps ):
         qp_density                    =  lps["lps_qp_density"] if lps is not None else mps["mps_qp_density"]
         approx_data["qp"][param]      = np.int32(decoder.iae_v( 6 + qp_density ) + quantization_parameter)
         approx_data["dq_flag"][param] = ndu["dq_flag"]
+    
+    else:
+        approx_data["dq_flag"][param] = 0
         
     decoder.initCtxModels( ndu["cabac_unary_length_minus1"] )
     scan_order = ndu.get("scan_order", 0)
