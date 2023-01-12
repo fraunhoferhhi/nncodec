@@ -539,9 +539,9 @@ class ApproxInfo():
                 else:
                     self.approx_info["qp"][x] = qp if model_info["parameter_type"][x] in nnc_core.nnr_model.W_TYPES else self.qp_other
             if qp_per_tensor is not None:
-                assert type(qp_per_tensor) is dict(), "qp_per_tensor must be a dict!"  
+                assert type(qp_per_tensor) is dict, "qp_per_tensor must be a dict!"  
                 for x in approx_data["parameters"]:
-                    approx_data["parameters"][x] = qp_per_tensor.get(x, approx_data["parameters"][x])
+                    self.approx_info["qp"][x] = qp_per_tensor.get(x, self.approx_info["qp"][x])
             if opt_qp:
                 self._modify_qp(approx_data, model_info)
 
