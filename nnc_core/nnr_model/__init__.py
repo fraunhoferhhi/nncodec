@@ -165,12 +165,12 @@ class NNRModel():
                 model_info['parameter_dimensions'][module_name] = np.array([0]).shape
             model_info['parameter_index'][module_name] = i
 
-        dims = len(mdl_shape)
+            dims = len(mdl_shape)
 
-        if dims > 1:
-            model_info['parameter_type'][module_name] = 'weight'
-        else:
-            model_info['parameter_type'][module_name] = 'unspecified'
+            if dims > 1:
+                model_info['parameter_type'][module_name] = 'weight'
+            else:
+                model_info['parameter_type'][module_name] = 'unspecified'
 
         model_info['topology_storage_format'] = nnc_core.nnr_model.TopologyStorageFormat.NNR_TPL_UNREC
         model_info['topology_compression_format'] = nnc_core.nnr_model.TopologyCompressionFormat.NNR_PT_RAW
