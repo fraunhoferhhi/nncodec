@@ -62,9 +62,9 @@ def save_to_tensorflow_file( model_data, path ):
         grp_names = []
         for module_name in model_data:
             splits = module_name.split('/')
-            grp_name = module_name.split('/')[0].encode('utf8')
+            grp_name = module_name.split('/')[0]
             if splits[0] == splits[2]:
-                grp_name = (splits[0] + '/' + splits[1]).encode('utf8')
+                grp_name = (splits[0] + '/' + splits[1])
             if grp_name not in grp_names:
                 grp_names.append(grp_name)
             if model_data[module_name].size != 1:
@@ -75,14 +75,14 @@ def save_to_tensorflow_file( model_data, path ):
 
         for grp in h5_model:
             weight_attr = []
-            if isinstance(h5_model[grp], h5py.Group) and grp.encode('utf8') in grp_names:
-                weight_attr = [k[len(grp)+1:].encode('utf8') for k, v in model_data.items()
+            if isinstance(h5_model[grp], h5py.Group) and grp in grp_names:
+                weight_attr = [k[len(grp)+1:] for k, v in model_data.items()
                                if k.startswith(grp+'/')]
                 h5_model[grp].attrs['weight_names'] = weight_attr
             elif isinstance(h5_model[grp], h5py.Group):
                 for subgrp in h5_model[grp]:
-                    if isinstance(h5_model[grp], h5py.Group) and (grp + '/' + subgrp).encode('utf8') in grp_names:
-                        weight_attr = [k[len(grp) + len(subgrp) + 2:].encode('utf8') for k, v in model_data.items()
+                    if isinstance(h5_model[grp], h5py.Group) and (grp + '/' + subgrp) in grp_names:
+                        weight_attr = [k[len(grp) + len(subgrp) + 2:] for k, v in model_data.items()
                                        if k.startswith(grp + '/' + subgrp + '/')]
                     h5_model[grp + '/' + subgrp].attrs['weight_names'] = weight_attr
 
@@ -243,13 +243,13 @@ class TensorFlowModel(nnc_core.nnr_model.NNRModel):
                 return self.init_model_from_model_object(model_file)
             else:
                 if 'layer_names' in model_file.attrs:
-                    module_names = [n.decode('utf8') for n in model_file.attrs['layer_names']]
+                    module_names = [n for n in model_file.attrs['layer_names']]
 
                 layer_names = []
                 for mod_name in module_names:
                     layer = model_file[mod_name]
                     if 'weight_names' in layer.attrs:
-                        weight_names = [mod_name+'/'+n.decode('utf8') for n in layer.attrs['weight_names']]
+                        weight_names = [mod_name+'/'+n for n in layer.attrs['weight_names']]
                         if weight_names:
                             layer_names += weight_names
 
@@ -273,13 +273,13 @@ class TensorFlowModel(nnc_core.nnr_model.NNRModel):
         os.remove(h5_model_path)
         
         if 'layer_names' in model.attrs:
-            module_names = [n.decode('utf8') for n in model.attrs['layer_names']]
+            module_names = [n for n in model.attrs['layer_names']]
 
         layer_names = []
         for mod_name in module_names:
             layer = model[mod_name]
             if 'weight_names' in layer.attrs:
-                weight_names = [mod_name+'/'+n.decode('utf8') for n in layer.attrs['weight_names']]
+                weight_names = [mod_name+'/'+n for n in layer.attrs['weight_names']]
                 if weight_names:
                     layer_names += weight_names
 
