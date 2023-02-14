@@ -66,7 +66,7 @@ class ImageNetDataset(datasets.ImageFolder):
         if train:
             root = os.path.join(root, 'train')
         elif validate:
-            root = os.path.join(root, 'tuning')
+            root = os.path.join(root, 'train')
         else:
             root = os.path.join(root, 'val')
         super().__init__(root, transform=transforms_pyt_model_zoo, *args, **kwargs)
@@ -78,6 +78,15 @@ class ImageNetDataset(datasets.ImageFolder):
             # self.samples = [(mapping[x[0]], x[1]) for x in self.samples]
             self.samples = [(x[0], mapping[x[0]]) for x in self.samples]
             self.targets = [x[1] for x in self.samples]
+
+        if validate:
+            with open(VALIDATION_FILES, 'r') as f:
+                names = [x.strip() for x in f.readlines()]
+            class_names = [x.split('_')[0] for x in names]
+            val_names = set(os.path.join(self.root, class_name, x) for class_name, x in zip(class_names, names))
+            self.samples = [x for x in self.samples if x[0] in val_names]
+            self.targets = [x[1] for x in self.samples]
+
 
         if train:
             with open(VALIDATION_FILES, 'r') as f:

@@ -49,7 +49,7 @@ from glob import glob
 from setuptools.command.build_ext import build_ext
 import setuptools
 
-__version__ = '0.1.7'
+__version__ = '0.1.8'
 
 
 class get_pybind_include(object):
@@ -151,5 +151,6 @@ setup(
     setup_requires=['pybind11>=2.3'],
     cmdclass={'build_ext': BuildExt},
     zip_safe=False,
+    package_data={"": ["*.txt"]},
     include_package_data=True,
 )
