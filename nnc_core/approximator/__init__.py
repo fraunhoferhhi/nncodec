@@ -90,21 +90,22 @@ def init_approx_data(
             continue
 
     for block_id in model_info["block_identifier"].values():
-        block_access = NNRBlockAccess(model_info, block_id)
-        cpt = 0
-        if block_access.bn_gamma:
-            cpt += hls.BlockParameterTypes.NNR_CPT_BN
-        if block_access.bi in approx_data["parameters"]: 
-            cpt += hls.BlockParameterTypes.NNR_CPT_BI
-        if block_access.dc_g in approx_data["parameters"]: 
-            cpt += hls.BlockParameterTypes.NNR_CPT_DC
-            par_dc_g = block_access.dc_g
-            #par_dc_h = block_access.dc_h
-            approx_data["decomposition_rank"][block_id] = approx_data["parameters"][par_dc_g].shape[1] 
-            approx_data["g_number_of_rows"][block_id] = approx_data["parameters"][par_dc_g].shape[0] 
-        if block_access.ls in approx_data["parameters"]: 
-            cpt += hls.BlockParameterTypes.NNR_CPT_LS
-        approx_data["compressed_parameter_types"][block_id] = cpt
+        if block_id != None:
+            block_access = NNRBlockAccess(model_info, block_id)
+            cpt = 0
+            if block_access.bn_gamma:
+                cpt += hls.BlockParameterTypes.NNR_CPT_BN
+            if block_access.bi in approx_data["parameters"]: 
+                cpt += hls.BlockParameterTypes.NNR_CPT_BI
+            if block_access.dc_g in approx_data["parameters"]: 
+                cpt += hls.BlockParameterTypes.NNR_CPT_DC
+                par_dc_g = block_access.dc_g
+                #par_dc_h = block_access.dc_h
+                approx_data["decomposition_rank"][block_id] = approx_data["parameters"][par_dc_g].shape[1] 
+                approx_data["g_number_of_rows"][block_id] = approx_data["parameters"][par_dc_g].shape[0] 
+            if block_access.ls in approx_data["parameters"]: 
+                cpt += hls.BlockParameterTypes.NNR_CPT_LS
+            approx_data["compressed_parameter_types"][block_id] = cpt
 
     return approx_data
 
@@ -182,8 +183,9 @@ def unfold_bn(model_info, approx_data):
 def set_lsa(model_info, approx_data, lsa_params):
     for k, v in lsa_params.items():
         approx_data["parameters"][k] = v.reshape([v.shape[0]])
-        bi = model_info["block_identifier"][k]
-        approx_data["compressed_parameter_types"][bi] |= hls.BlockParameterTypes.NNR_CPT_LS
+        bi = model_info["block_identifier"].get(k, None)
+        if bi is not None:
+            approx_data["compressed_parameter_types"][bi] |= hls.BlockParameterTypes.NNR_CPT_LS
 
 def apply_lsa(model_info, approx_data):
     assert not approx_data["approx_method"]

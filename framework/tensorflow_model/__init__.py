@@ -299,11 +299,22 @@ class TensorFlowModel(nnc_core.nnr_model.NNRModel):
 
 
         model_data = {'parameters': {}, 'reduction_method': 'baseline'}
-        model_info = {'parameter_type': {}, 'parameter_dimensions': {}, 'parameter_index': {}, 'block_identifier': {}, 'topology_storage_format' : None, 'topology_compression_format' : None}
+        model_info = {'parameter_type': {}, 'parameter_dimensions': {}, 'parameter_index': {}, 'block_identifier': {}, 'original_size': {}, 'topology_storage_format' : None, 'topology_compression_format' : None}
 
+        type_list_int = ['int8', 'int16', 'int32', 'uint8', 'uint16', 'uint32']
+        type_list_1_bytes = ['int8', 'uint8']
+        type_list_2_bytes = ['int16', 'uint16', 'float16']
+        original_size = 0
 
         for i, module_name in enumerate(tf_dict):
             model_data['parameters'][module_name] = tf_dict[module_name][()]
+            if  model_data['parameters'][module_name].dtype in type_list_1_bytes:
+                original_size += model_data['parameters'][module_name].size
+            elif  model_data['parameters'][module_name].dtype in type_list_2_bytes:
+                original_size +=  model_data['parameters'][module_name].size*2
+            else:
+                original_size +=  model_data['parameters'][module_name].size*4
+            model_data['parameters'][module_name] = np.int32(model_data['parameters'][module_name]) if model_data['parameters'][module_name].dtype in type_list_int else model_data['parameters'][module_name]
             mdl_shape = model_data['parameters'][module_name].shape
             model_info['parameter_dimensions'][module_name] = mdl_shape
             if len(mdl_shape) == 0: #scalar
@@ -331,6 +342,8 @@ class TensorFlowModel(nnc_core.nnr_model.NNRModel):
                     model_info['parameter_type'][module_name] = 'bn.var' if quantize_onedim else 'unspecified'
                 elif 'gamma' in module_name:
                     model_info['parameter_type'][module_name] = 'bn.gamma' if quantize_onedim else 'unspecified'
+                elif 'weight' in module_name:
+                    model_info['parameter_type'][module_name] = 'weight' if quantize_onedim else 'unspecified'
                 else:
                     model_info['parameter_type'][module_name] = 'unspecified'
             else:
@@ -339,6 +352,8 @@ class TensorFlowModel(nnc_core.nnr_model.NNRModel):
         model_info['topology_storage_format'] = nnc_core.nnr_model.TopologyStorageFormat.NNR_TPL_TEF
         model_info['topology_compression_format'] = nnc_core.nnr_model.TopologyCompressionFormat.NNR_PT_RAW
 
+        model_info["original_size"] = original_size
+        
         self.__model_info = model_info
 
         return model_data["parameters"]
@@ -382,58 +397,105 @@ class TensorFlowModel(nnc_core.nnr_model.NNRModel):
         try:
             block_id_and_param_type = {"block_identifier" : {}, "parameter_type" : {}}
             block_dict = dict()
+            blkNum = -1
             for param in model_parameters.keys():
                 splitted_param = param.split("/")
-                for iElem, blkElem in enumerate(splitted_param):
-                    if blkElem.endswith("_bn"):
-                        splitted_param[iElem] = blkElem[0:-3]
-                    elif blkElem.endswith("_BN"):
-                        splitted_param[iElem] = blkElem[0:-3]
-                    elif blkElem.startswith("bn_"):
-                        splitted_param[iElem] = blkElem[3::]
-                    elif blkElem.startswith("BN_"):
-                        splitted_param[iElem] = blkElem[3::]
                 param_end = splitted_param[-1]
-                block_id  = "/".join(splitted_param[0:-1])
+                base_block_id  = "/".join(splitted_param[0:-1])
+                base_block_id  = "/".join(splitted_param[0:-1])+":" if len(splitted_param[0:-1]) != 0 else "genericBlk:"
                 dims = len(model_parameters[param].shape)
-
-                if block_id not in block_dict.keys():
-                    block_dict[block_id] = []
+                paramShape = model_parameters[param].shape
+            
 
                 if dims > 1 and ('kernel' in param_end or 'weight' in param_end):
                     paramType = 'weight'
-                    blockId = block_id
+                    blockId = base_block_id
+                elif dims > 1:
+                    paramType = 'weight'
+                    blockId = base_block_id
                 elif dims == 1:
-                    if 'bias' in param or 'beta' in param: ##could also be bn.beta
+                    if 'bias' in param_end or 'beta' in param_end: ##could also be bn.beta
                         paramType = 'bias'
-                        blockId = block_id
-                    elif '.running_mean' in param or 'moving_mean' in param:
+                        blockId = base_block_id
+                    elif 'running_mean' in param_end or 'moving_mean' in param_end:
                         paramType = 'bn.mean'
-                        blockId = block_id
-                    elif '.running_var' in param or 'moving_variance' in param:                        
+                        blockId = base_block_id
+                    elif 'running_var' in param_end or 'moving_variance' in param_end:                        
                         paramType = 'bn.var'
-                        blockId = block_id
-                    elif '.weight' in param or 'gamma' in param:
+                        blockId = base_block_id
+                    elif 'weight_scaling' in param_end:
+                        paramType = 'weight.ls'
+                        blockId = base_block_id
+                    elif 'gamma' in param_end:
                         paramType = 'bn.gamma'
-                        blockId = block_id
+                        blockId = base_block_id
+                    elif 'weight' in param_end:
+                        paramType = 'weight'
+                        blockId = base_block_id
                     else:
                         paramType = 'unspecified'
                         blockId = None
-
                 else:
                     paramType = 'unspecified'
                     blockId = None
                 
+                
                 if blockId:
-                    block_dict[block_id].append( [param, paramType, blockId] )
+                    block_id = base_block_id + str(blkNum)
+                    if block_id in block_dict.keys():
+                        if any([a[1] == paramType for a in block_dict[block_id]]):
+                            blkNum += 1
+                        block_id = base_block_id + str(blkNum)
+                        blockId = base_block_id + str(blkNum)
+                    else:
+                        blkNum += 1
+                        block_id = base_block_id + str(blkNum)
+                        blockId = base_block_id + str(blkNum)
+                        
+                    if block_id not in block_dict.keys():
+                        block_dict[block_id] = []
+                        
+                    block_dict[block_id].append( [param, paramType, blockId, dims, paramShape] )
+                else:
+                    block_id_and_param_type["parameter_type"][param] = paramType
+                    block_id_and_param_type["block_identifier"][param] = blockId
+                
+                
+            weight_block_list = []
+            bn_block_list     = []
 
             for block_list in block_dict.values():
-                for par, parT, blkId in block_list:
-                    if (len(block_list) == 5 and parT == 'bias') or ( len(block_list) == 6 and parT == 'bias' and 'beta' in par ): ## In this case bias in bn.beta
-                        block_id_and_param_type["parameter_type"][par] = "bn.beta"
-                    else:
-                        block_id_and_param_type["parameter_type"][par] = parT
+                if any(["bn." in a[1] for a in block_list]):
+                    for i, val in enumerate(block_list):
+                        par, parT, blkId, dims, _ = val
+                        if parT == 'weight' and dims == 1:
+                            block_list[i][1] = "bn.gamma"
+                        if parT == 'bias':
+                            block_list[i][1] = "bn.beta"
+                    bn_block_list.append( block_list )
+                else:
+                    weight_block_list.append(block_list)
+                    
+            weight_shape = None
+            weight_blkId = None
+            for weight_block in weight_block_list:
+                weight_shape = None
+                weight_blkId = None
+                for par, parT, blkId, dims, paramSh in weight_block:
+                    block_id_and_param_type["parameter_type"][par] = parT
                     block_id_and_param_type["block_identifier"][par] = blkId
+                    if parT == 'weight':
+                        weight_shape = paramSh
+                        weight_blkId = blkId
+            
+                if len(bn_block_list) != 0 and any([dim == bn_block_list[0][0][4][0] for dim in weight_shape]):
+                    bn_block = bn_block_list.pop(0)
+                    for par, parT, _, _, _ in bn_block:
+                        block_id_and_param_type["parameter_type"][par] = parT
+                        block_id_and_param_type["block_identifier"][par] = weight_blkId
+            
+            assert len(bn_block_list) == 0, "Unhandled BN parameters!"
+            
         except:
             print("INFO: Guessing of block_id_and_parameter_type failed! block_id_and_parameter_type has been set to 'None'!")
             block_id_and_param_type = None

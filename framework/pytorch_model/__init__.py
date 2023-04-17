@@ -291,17 +291,28 @@ class PytorchModel(nnc_core.nnr_model.NNRModel):
             model_dict = pt_dict.state_dict()
 
         model_data = {'parameters': {}, 'reduction_method': 'baseline'}
-        model_info = {'parameter_type': {}, 'parameter_dimensions': {}, 'parameter_index': {}, 'block_identifier': {},
+        model_info = {'parameter_type': {}, 'parameter_dimensions': {}, 'parameter_index': {}, 'block_identifier': {}, 'original_size': {},
                       'topology_storage_format': nnc_core.nnr_model.TopologyStorageFormat.NNR_TPL_PYT,
                       'topology_compression_format': nnc_core.nnr_model.TopologyCompressionFormat.NNR_PT_RAW}
 
         # metadata only needed for MNASNet from PYT model zoo... further work: include into bitstream
         # self.metadata = getattr(model_dict, '_metadata', None)
 
+        type_list_int = ['int8', 'int16', 'int32', 'uint8', 'uint16', 'uint32']
+        type_list_1_bytes = ['int8', 'uint8']
+        type_list_2_bytes = ['int16', 'uint16', 'float16']
+        original_size = 0
+
         for i, module_name in enumerate(model_dict):
             if '.num_batches_tracked' in module_name:
                 continue
-            model_data['parameters'][module_name] = model_dict[module_name].data.cpu().detach().numpy()
+            if model_dict[module_name].data.cpu().detach().numpy().dtype in type_list_1_bytes:
+                original_size += model_dict[module_name].numel()
+            elif model_dict[module_name].data.cpu().detach().numpy().dtype in type_list_2_bytes:
+                original_size += model_dict[module_name].numel()*2
+            else:
+                original_size += model_dict[module_name].numel()*4
+            model_data['parameters'][module_name] = np.int32(model_dict[module_name].data.cpu().detach().numpy()) if model_dict[module_name].data.cpu().detach().numpy().dtype in type_list_int else model_dict[module_name].data.cpu().detach().numpy()
             if '.weight_scaling' in module_name:
                 model_data['parameters'][module_name] = model_data['parameters'][module_name].flatten()
             mdl_shape = model_data['parameters'][module_name].shape
@@ -326,13 +337,16 @@ class PytorchModel(nnc_core.nnr_model.NNRModel):
                     model_info['parameter_type'][module_name] = 'bn.var'
                 elif '.weight_scaling' in module_name:
                     model_info['parameter_type'][module_name] = 'weight.ls'
-                elif '.weight' in module_name:
+                elif 'gamma' in module_name:
                     model_info['parameter_type'][module_name] = 'bn.gamma'
+                elif '.weight' in module_name:
+                    model_info['parameter_type'][module_name] = "weight"
                 else:
                     model_info['parameter_type'][module_name] = 'unspecified'
             else:
                 model_info['parameter_type'][module_name] = 'unspecified'
             
+        model_info["original_size"] = original_size
 
         self.__model_info = model_info
 
@@ -354,31 +368,37 @@ class PytorchModel(nnc_core.nnr_model.NNRModel):
             blkNum = -1
             for param in model_parameters.keys():
                 dims = len(model_parameters[param].shape)
+                paramShape = model_parameters[param].shape
                 splitted_param = param.split(".")
                 param_end = splitted_param[-1]
-                base_block_id  = ".".join(splitted_param[0:-2]+[""]) if len(splitted_param[0:-2]) != 0 else "genericBlk."
-
+                base_block_id  = ".".join(splitted_param[0:-1]+[""]) if len(splitted_param[0:-1]) != 0 else "genericBlk."
 
 
                 if dims > 1 and ('kernel' in param_end or 'weight' in param_end):
                     paramType = 'weight'
-                    blockId = base_block_id #block_id
+                    blockId = base_block_id
+                elif dims > 1:
+                    paramType = 'weight'
+                    blockId = base_block_id
                 elif dims == 1:
-                    if 'bias' in param_end or 'beta' in param_end: ##could also be bn.beta
+                    if 'bias' in param_end or 'beta' in param_end:
                         paramType = 'bias'
-                        blockId = base_block_id #block_id
+                        blockId = base_block_id
                     elif 'running_mean' in param_end or 'moving_mean' in param_end:
                         paramType = 'bn.mean'
-                        blockId = base_block_id #block_id
+                        blockId = base_block_id
                     elif 'running_var' in param_end or 'moving_variance' in param_end:                        
                         paramType = 'bn.var'
-                        blockId = base_block_id #block_id
+                        blockId = base_block_id
                     elif 'weight_scaling' in param_end:
                         paramType = 'weight.ls'
                         blockId = base_block_id
-                    elif 'weight' in param_end or 'gamma' in param_end:
+                    elif 'gamma' in param_end:
                         paramType = 'bn.gamma'
-                        blockId = base_block_id #block_id
+                        blockId = base_block_id
+                    elif 'weight' in param_end:
+                        paramType = 'weight'
+                        blockId = base_block_id
                     else:
                         paramType = 'unspecified'
                         blockId = None
@@ -401,29 +421,46 @@ class PytorchModel(nnc_core.nnr_model.NNRModel):
                     if block_id not in block_dict.keys():
                         block_dict[block_id] = []
                         
-                    block_dict[block_id].append( [param, paramType, blockId] )
-
-            lastBlkId = None
-            for block_list in block_dict.values():
-                lsa_enabled = any('weight.ls' in l for l in block_list)
-                blk_len = 6 if lsa_enabled else 5
-                hasWeightParam = False
-                for par, parT, blkId in block_list:
-                    if lastBlkId != None:
-                        blkId = lastBlkId
-                    if parT == 'weight':
-                        hasWeightParam = True
-                    if (len(block_list) == blk_len and parT == 'bias') or ( len(block_list) == 6 and parT == 'bias' and 'beta' in par ): ## In this case bias in bn.beta
-                        block_id_and_param_type["parameter_type"][par] = "bn.beta"
-                        block_list[1]="bn.beta"
-                    else:
-                        block_id_and_param_type["parameter_type"][par] = parT
-                    block_id_and_param_type["block_identifier"][par] = blkId
-                
-                if hasWeightParam == False: #incomplete block detected
-                    lastBlkId = blkId
+                    block_dict[block_id].append( [param, paramType, blockId, dims, paramShape] )
                 else:
-                    lastBlkId = None
+                    block_id_and_param_type["parameter_type"][param] = paramType
+                    block_id_and_param_type["block_identifier"][param] = blockId
+                            
+            weight_block_list = []
+            bn_block_list     = []
+
+            for block_list in block_dict.values():
+                if any(["bn." in a[1] for a in block_list]):
+                    for i, val in enumerate(block_list):
+                        par, parT, blkId, dims, _ = val
+                        if parT == 'weight' and dims == 1:
+                            block_list[i][1] = "bn.gamma"
+                        if parT == 'bias':
+                            block_list[i][1] = "bn.beta"
+                    bn_block_list.append( block_list )
+                else:
+                    weight_block_list.append(block_list)
+                    
+            weight_shape = None
+            weight_blkId = None
+            for weight_block in weight_block_list:
+                weight_shape = None
+                weight_blkId = None
+                for par, parT, blkId, dims, paramSh in weight_block:
+                    block_id_and_param_type["parameter_type"][par] = parT
+                    block_id_and_param_type["block_identifier"][par] = blkId
+                    if parT == 'weight':
+                        weight_shape = paramSh
+                        weight_blkId = blkId
+            
+                if len(bn_block_list) != 0 and any([dim == bn_block_list[0][0][4][0] for dim in weight_shape]):
+                    bn_block = bn_block_list.pop(0)
+                    for par, parT, _, _, _ in bn_block:
+                        block_id_and_param_type["parameter_type"][par] = parT
+                        block_id_and_param_type["block_identifier"][par] = weight_blkId
+            
+            assert len(bn_block_list) == 0
+                                
         except:
             print("INFO: Guessing of block_id_and_parameter_type failed! block_id_and_parameter_type has been set to 'None'!")
             block_id_and_param_type = None

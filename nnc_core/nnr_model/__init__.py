@@ -154,10 +154,21 @@ class NNRModel():
             raise SystemExit("model_dict must be of type dict")
 
         model_data = {'parameters': {}, 'reduction_method': 'baseline'}
-        model_info = {'parameter_type': {}, 'parameter_dimensions': {}, 'parameter_index': {}, 'block_identifier': {}, 'topology_storage_format' : None, 'topology_compression_format' : None}
+        model_info = {'parameter_type': {}, 'parameter_dimensions': {}, 'parameter_index': {}, 'block_identifier': {}, 'original_size': {}, 'topology_storage_format' : None, 'topology_compression_format' : None}
+
+        type_list_int = ['int8', 'int16', 'int32', 'uint8', 'uint16', 'uint32']
+        type_list_1_bytes = ['int8', 'uint8']
+        type_list_2_bytes = ['int16', 'uint16', 'float16']
+        original_size = 0
 
         for i, module_name in enumerate(model_dict):
-            model_data['parameters'][module_name] = model_dict[module_name]
+            if model_dict[module_name].dtype in type_list_1_bytes:
+                original_size += model_dict[module_name].size
+            elif model_dict[module_name].dtype in type_list_2_bytes:
+                original_size += model_dict[module_name].size*2
+            else:
+                original_size += model_dict[module_name].size*4
+            model_data['parameters'][module_name] = np.int32(model_dict[module_name]) if model_dict[module_name].dtype in type_list_int else model_dict[module_name]
             mdl_shape = model_data['parameters'][module_name].shape
             model_info['parameter_dimensions'][module_name] = mdl_shape
             if len(mdl_shape) == 0: #scalar
@@ -174,6 +185,8 @@ class NNRModel():
 
         model_info['topology_storage_format'] = nnc_core.nnr_model.TopologyStorageFormat.NNR_TPL_UNREC
         model_info['topology_compression_format'] = nnc_core.nnr_model.TopologyCompressionFormat.NNR_PT_RAW
+
+        model_info["original_size"] = original_size
 
         self.__model_info = model_info
 
@@ -328,20 +341,21 @@ def set_block_id_and_param_type(model_info, block_id_and_param_type):
     assert "parameter_type" in block_id_and_param_type, "parameter_type not available!"
     
     model_info["block_identifier"] = {}
-    model_info["parameter_type"] = {}
-    model_info["parameter_index"] = {}
+    
+    block_id_values_list = list(block_id_and_param_type["block_identifier"].values())
 
-    for parId, param in enumerate(block_id_and_param_type["parameter_type"].keys()):
-        model_info["parameter_type"][param] = block_id_and_param_type["parameter_type"][param]
-        model_info["parameter_index"][param] = parId
-        if param in block_id_and_param_type["block_identifier"]:
+    for param, pardIdx in model_info["parameter_index"].items():
+        model_info["parameter_index"][param] = pardIdx
+        if param in block_id_and_param_type["parameter_type"].keys():
+            model_info["parameter_type"][param] = block_id_and_param_type["parameter_type"][param]
+        if param in block_id_and_param_type["block_identifier"].keys() and block_id_and_param_type["block_identifier"][param] is not None and block_id_values_list.count(block_id_and_param_type["block_identifier"][param]) > 1 :
             model_info["block_identifier"][param] = block_id_and_param_type["block_identifier"][param]
             
             
 def add_lsa_to_block_id_and_param_type( block_id_and_param_type, lsa_params ):
     for key in lsa_params.keys():
         if key not in block_id_and_param_type["block_identifier"]:
-            block_id_and_param_type["block_identifier"][key] = block_id_and_param_type["block_identifier"][key.strip("_scaling")]
+            block_id_and_param_type["block_identifier"][key] = block_id_and_param_type["block_identifier"].get(key.strip("_scaling"), None)
             block_id_and_param_type["parameter_type"][key] = "weight.ls"
             
 
@@ -349,14 +363,15 @@ def sanity_check_block_id_and_param_type(block_id_and_param_type, model_paramete
     block_dict = dict()
     sanity_check_success = True
     for param, blkId in block_id_and_param_type["block_identifier"].items():
-        parT = block_id_and_param_type["parameter_type"][param]
-        parShape = model_parameters[param].shape if model_parameters else None
-        if model_parameters and parT != "weight" and len(parShape) != 1:
-            sanity_check_success = False
-            break
-        if blkId not in block_dict.keys():
-            block_dict[blkId] = []
-        block_dict[blkId].append([param, parT, parShape])
+        if blkId != None:
+            parT = block_id_and_param_type["parameter_type"][param]
+            parShape = model_parameters[param].shape if model_parameters else None
+            if model_parameters and parT != "weight" and len(parShape) != 1:
+                sanity_check_success = False
+                break
+            if blkId not in block_dict.keys():
+                block_dict[blkId] = []
+            block_dict[blkId].append([param, parT, parShape])
     
     for bId, bList in block_dict.items():
         available_types = ["weight", "weight.ls", "bias", "bn.mean", "bn.var", "bn.gamma", "bn.beta"]

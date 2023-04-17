@@ -427,9 +427,7 @@ def compress(
     end = timer()
     __print_output_line("DONE in {:.4f} s\n".format( end-start ), verbose=verbose)
 
-    original_size = 0
-    for _, param in parameter_dict.items():
-        original_size += 4*param.size
+    original_size = nnc_mdl.model_info["original_size"]
 
     __print_output_line("COMPRESSED FROM {} BYTES TO {} BYTES ({} KB, {} MB, COMPRESSION RATIO: {:.2f} %) in {:.4f} s\n".format(original_size, len(bitstream), len(bitstream)/1000.0, len(bitstream)/1000000.0, len(bitstream)/original_size*100, end-start_overall), verbose=verbose)
     
@@ -527,7 +525,6 @@ def decompress_model( bitstream_or_path,
                       test_model=False,
                       return_model_information=False,
                       return_decompressed_model=False,
-                      return_model_with_decoded_parameters=False,
                       verbose=True,
                     ):
     
@@ -571,7 +568,7 @@ def decompress_model( bitstream_or_path,
                     )
             print(acc)
         
-        if model_struct and return_model_with_decoded_parameters:
+        if model_struct and return_decompressed_model:
             model_with_decoded_parameters = pytorch_model.get_model_file_with_parameters(model_struct=model_struct, parameters=model_dict)
                 
     elif model_information["topology_storage_format"] == nnc_core.nnr_model.TopologyStorageFormat.NNR_TPL_TEF:
@@ -600,7 +597,7 @@ def decompress_model( bitstream_or_path,
                     )
             print(acc)
 
-        if model_struct and return_model_with_decoded_parameters:
+        if model_struct and return_decompressed_model:
            model_with_decoded_parameters = tensorflow_model.get_model_file_with_parameters(model_struct=model_struct, parameters=model_dict)
 
     elif model_information["topology_storage_format"] == nnc_core.nnr_model.TopologyStorageFormat.NNR_TPL_UNREC or model_information["topology_storage_format"] == None:
@@ -622,7 +619,7 @@ def decompress_model( bitstream_or_path,
     
     if return_decompressed_model and return_model_information:
         return model_with_decoded_parameters, model_information
-    elif model_with_decoded_parameters:
-        return return_decompressed_model
+    elif return_decompressed_model:
+        return model_with_decoded_parameters
     elif return_model_information:
         return model_information
