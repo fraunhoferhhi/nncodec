@@ -49,7 +49,7 @@ from glob import glob
 from setuptools.command.build_ext import build_ext
 import setuptools
 
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 
 
 class get_pybind_include(object):

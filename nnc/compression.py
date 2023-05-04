@@ -38,7 +38,6 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 '''
     
-from symbol import pass_stmt
 import sys
 
 assert sys.version_info >= (3, 6)
