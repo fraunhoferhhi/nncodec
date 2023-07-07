@@ -196,8 +196,6 @@ def save_to_pytorch_file( model_data, path ):
     model_dict = OrderedDict()
     for module_name in model_data:
         model_dict[module_name] = torch.tensor(model_data[module_name])
-        if model_data[module_name].size == 1:
-            model_dict[module_name] = torch.tensor(np.int64(model_data[module_name][0]))
     torch.save(model_dict, path)
 
 

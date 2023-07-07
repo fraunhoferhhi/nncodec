@@ -44,7 +44,6 @@ import nnc_core
 import h5py
 import os
 import tensorflow as tf
-from tensorflow import keras
 
 import copy, logging
 import numpy as np
@@ -67,10 +66,7 @@ def save_to_tensorflow_file( model_data, path ):
                 grp_name = (splits[0] + '/' + splits[1])
             if grp_name not in grp_names:
                 grp_names.append(grp_name)
-            if model_data[module_name].size != 1:
-                h5_model.create_dataset(module_name, data=model_data[module_name])
-            else: #scalar
-                h5_model.create_dataset(module_name, data=np.int64(model_data[module_name][0]))
+            h5_model.create_dataset(module_name, data=model_data[module_name])
         h5_model.attrs['layer_names'] = grp_names
 
         for grp in h5_model:
