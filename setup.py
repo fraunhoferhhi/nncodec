@@ -6,7 +6,7 @@ the Software are granted under this license.
 
 The Clear BSD License
 
-Copyright (c) 2019-2022, Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V. & The NNCodec Authors.
+Copyright (c) 2019-2023, Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V. & The NNCodec Authors.
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
@@ -49,7 +49,7 @@ from glob import glob
 from setuptools.command.build_ext import build_ext
 import setuptools
 
-__version__ = '0.2.1'
+__version__ = '0.2.2'
 
 
 class get_pybind_include(object):

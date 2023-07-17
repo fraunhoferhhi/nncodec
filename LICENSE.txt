@@ -6,7 +6,7 @@ the Software are granted under this license.
 
 The Clear BSD License
 
-Copyright (c) 2019-2022, Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V. & The NNCodec Authors.
+Copyright (c) 2019-2023, Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V. & The NNCodec Authors.
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
@@ -51,7 +51,7 @@ License, included below. This software may be subject to other third party
 and contributor rights, including patent rights, and no such rights are
 granted under this license.   
 
-Copyright (c) 2019-2022, ISO/IEC
+Copyright (c) 2019-2023, ISO/IEC
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
