@@ -1,4 +1,4 @@
-<img src="https://github.com/fraunhoferhhi/nncodec/files/12078067/nncodec_logo2.pdf" width="518"/>
+<img src="https://github.com/fraunhoferhhi/nncodec/assets/65648299/69b41b38-19ed-4c45-86aa-2b2cd4d835f7" width="518"/>
 
 # Fraunhofer Neural Network Encoder/Decoder (NNCodec)
 
