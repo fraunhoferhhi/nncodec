@@ -1,3 +1,5 @@
+![nncodec_logo2](https://github.com/fraunhoferhhi/nncodec/assets/65648299/7a7ac52e-2944-40c2-b7ed-c242646496ae)
+
 # Fraunhofer Neural Network Encoder/Decoder (NNCodec)
 
 The Fraunhofer Neural Network Encoder/Decoder Software (NNCodec) is an efficient implementation of NNC (Neural Network Coding / ISO/IEC 15938-17 or MPEG-7 part 17), which is the first international standard on compression of neural networks.
