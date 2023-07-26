@@ -17,11 +17,11 @@ ISO/IEC Standard"** was awarded a Spotlight Paper at the ICML 2023 Neural Compre
 
 **TL;DR** -  The paper presents NNCodec, analyses its coding tools with respect to the principles of information theory and gives comparative results for a broad range of neural network architectures. 
 
-The code for reproducing the experimental results of the paper and a software demo will be available 
-from July 29.
+The code for reproducing the experimental results of the paper and a software demo are available 
+here:
 
 [![Conference](https://img.shields.io/badge/ICML-Paper-blue)](https://openreview.net/forum?id=5VgMDKUgX0)
-[![Conference](https://img.shields.io/badge/ICML-Code-red)]()
+[![Conference](https://img.shields.io/badge/ICML-Code-red)](https://github.com/d-becking/nncodec-icml-2023-demo)
 
 ## Information
 
