@@ -86,7 +86,7 @@ If you use NNCodec in your work, please cite:
 ```
 @inproceedings{becking2023nncodec,
 title={{NNC}odec: An Open Source Software Implementation of the Neural Network Coding {ISO}/{IEC} Standard},
-author={Daniel Becking and Paul Haase and Heiner Kirchhoffer and Karsten M{\"u}ller and Wojciech Samek},
+author={Daniel Becking and Paul Haase and Heiner Kirchhoffer and Karsten M{\"u}ller and Wojciech Samek and Detlev Marpe},
 booktitle={ICML 2023 Workshop Neural Compression: From Information Theory to Applications},
 year={2023},
 url={https://openreview.net/forum?id=5VgMDKUgX0}
