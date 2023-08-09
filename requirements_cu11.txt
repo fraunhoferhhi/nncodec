@@ -1,4 +1,4 @@
---extra-index-url https://download.pytorch.org/whl/cu113
+--extra-index-url https://download.pytorch.org/whl/cu118
 Click>=7.0
 scikit-learn>=0.23.1
 tqdm>=4.32.2
