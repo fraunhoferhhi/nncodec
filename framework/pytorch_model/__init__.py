@@ -482,7 +482,14 @@ class ImageNetPytorchModelExecuter( nnc_core.nnr_model.ModelExecute):
                  lr=1e-4,
                  ):
 
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        if torch.cuda.is_available():
+            device = "cuda"
+        elif torch.backends.mps.is_available():
+            device = "mps"
+        else:
+            device = "cpu"
+            
+        self.device = torch.device(device)
         
         torch.manual_seed(451)
         torch.backends.cudnn.deterministic = True
@@ -491,7 +498,6 @@ class ImageNetPytorchModelExecuter( nnc_core.nnr_model.ModelExecute):
         self.learning_rate = lr
         self.epochs = epochs
         self.max_batches = max_batches
-        
         self.handle = handler
         if test_set:
             self.test_set = test_set
@@ -517,7 +523,6 @@ class ImageNetPytorchModelExecuter( nnc_core.nnr_model.ModelExecute):
                    verbose=False
                    ):
 
-        torch.set_num_threads(1)
         Model = copy.deepcopy(self.model)
 
         base_model_arch = Model.state_dict()
@@ -556,7 +561,6 @@ class ImageNetPytorchModelExecuter( nnc_core.nnr_model.ModelExecute):
                    verbose=False
                    ):
 
-        torch.set_num_threads(1)
 
         Model = copy.deepcopy(self.model)
 
@@ -595,7 +599,7 @@ class ImageNetPytorchModelExecuter( nnc_core.nnr_model.ModelExecute):
             ft_flag=False,
             verbose=False,     
     ):
-        torch.set_num_threads(1)
+
         verbose = 1 if (verbose & 1) else 0
 
         base_model_arch = self.model.state_dict()
