@@ -148,47 +148,49 @@ class ModelSetting:
     ):
         image_size = 224
 
-        if self.__model_name == 'EfficientNetB1':
+        if self.__model_name == 'EfficientNetB1' or self.__model_name == 'efficientnetb1':
             image_size = 240
-        elif self.__model_name == 'EfficientNetB2':
+        elif self.__model_name == 'EfficientNetB2' or self.__model_name == 'efficientnetb2':
             image_size = 260
-        elif self.__model_name == 'EfficientNetB3':
+        elif self.__model_name == 'EfficientNetB3' or self.__model_name == 'efficientnetb3':
             image_size = 300
-        elif self.__model_name == 'EfficientNetB4':
+        elif self.__model_name == 'EfficientNetB4' or self.__model_name == 'efficientnetb4':
             image_size = 380
-        elif self.__model_name == 'EfficientNetB5':
+        elif self.__model_name == 'EfficientNetB5' or self.__model_name == 'efficientnetb5':
             image_size = 456
-        elif self.__model_name == 'EfficientNetB6':
+        elif self.__model_name == 'EfficientNetB6' or self.__model_name == 'efficientnetb6':
             image_size = 528
-        elif self.__model_name == 'EfficientNetB7':
+        elif self.__model_name == 'EfficientNetB7' or self.__model_name == 'efficientnetb7':
             image_size = 600
 
         image, label = self.model_transform(image, label, image_size=image_size)
 
-        if 'DenseNet' in self.__model_name:
+        if 'DenseNet' in self.__model_name or 'densenet' in self.__model_name:
             return tf.keras.applications.densenet.preprocess_input(image), label
-        elif 'EfficientNet' in self.__model_name:
+        elif 'EfficientNet' in self.__model_name or 'efficientnet' in self.__model_name:
             return tf.keras.applications.efficientnet.preprocess_input(image), label
-        elif self.__model_name == 'InceptionResNetV2':
+        elif self.__model_name == 'InceptionResNetV2' or self.__model_name == 'inception_resnet_v2':
             return tf.keras.applications.inception_resnet_v2.preprocess_input(image), label
-        elif self.__model_name == 'InceptionV3':
+        elif self.__model_name == 'InceptionV3' or self.__model_name == "inception_v3":
             return tf.keras.applications.inception_v3.preprocess_input(image), label
-        elif self.__model_name == 'MobileNet':
+        elif self.__model_name == 'MobileNet' or ( 'mobilenet' in self.__model_name and 'v2' not in self.__model_name ):
             return tf.keras.applications.mobilenet.preprocess_input(image), label
-        elif self.__model_name == 'MobileNetV2':
+        elif self.__model_name == 'MobileNetV2' or 'mobilenetv2' in self.__model_name:
             return tf.keras.applications.mobilenet_v2.preprocess_input(image), label
         elif 'NASNet' in self.__model_name:
             return tf.keras.applications.nasnet.preprocess_input(image), label
-        elif 'ResNet' in self.__model_name and 'V2' not in self.__model_name:
+        elif ('ResNet' in self.__model_name and 'V2' not in self.__model_name) or ('resnet' in self.__model_name and 'v2' not in self.__model_name):
             return tf.keras.applications.resnet.preprocess_input(image), label
-        elif 'ResNet' in self.__model_name and 'V2' in self.__model_name:
+        elif ('ResNet' in self.__model_name and 'V2' in self.__model_name) or ('resnet' in self.__model_name and 'v2' in self.__model_name):
             return tf.keras.applications.resnet_v2.preprocess_input(image), label
-        elif self.__model_name == 'VGG16':
+        elif self.__model_name == 'VGG16' or self.__model_name == 'vgg16':
             return tf.keras.applications.vgg16.preprocess_input(image), label
-        elif self.__model_name == 'VGG19':
+        elif self.__model_name == 'VGG19' or self.__model_name == 'vgg19':
             return tf.keras.applications.vgg19.preprocess_input(image), label
-        elif self.__model_name == 'Xception':
+        elif self.__model_name == 'Xception' or self.__model_name == 'xception':
             return tf.keras.applications.xception.preprocess_input(image), label
+        elif 'RegNet' in self.__model_name or 'regnet' in self.__model_name:
+            return tf.keras.applications.regnet.preprocess_input(image), label
 
 
 # supported use cases

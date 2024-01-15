@@ -131,6 +131,8 @@ def create_NNC_model_instance_from_file(
         model_struct = loaded_model_struct
 
     if dataset_path and model_struct:
+        if model_name == None and hasattr(model_struct, 'name'):
+            model_name=model_struct.name
         TEFModelExecuter = create_imagenet_model_executer(model_struct=model_struct,
                                                           dataset_path=dataset_path,
                                                           lr=lr,
@@ -161,6 +163,8 @@ def create_NNC_model_instance_from_object(
         model_struct = loaded_model_struct
 
     if dataset_path and model_struct:
+        if model_name == None and hasattr(model_struct, 'name'):
+            model_name=model_struct.name
         TEFModelExecuter = create_imagenet_model_executer(model_struct=model_struct,
                                                           dataset_path=dataset_path,
                                                           lr=lr,
@@ -230,6 +234,10 @@ class TensorFlowModel(nnc_core.nnr_model.NNRModel):
     def load_model( self, 
                     model_path
                   ):
+        
+        try:
+            model_file = tf.keras.models.load_model(model_path)
+        except:
         model_file = h5py.File(model_path, 'r')
         
         try:
@@ -262,26 +270,19 @@ class TensorFlowModel(nnc_core.nnr_model.NNRModel):
                                         model_object,
                                     ):
         self.model = model_object
-
-        h5_model_path = './temp.h5'
-        model_object.save_weights(h5_model_path)
-        model = h5py.File(h5_model_path, 'r')
-        os.remove(h5_model_path)
         
-        if 'layer_names' in model.attrs:
-            module_names = [n for n in model.attrs['layer_names']]
-
+        weights = model_object.get_weights()
         layer_names = []
-        for mod_name in module_names:
-            layer = model[mod_name]
-            if 'weight_names' in layer.attrs:
-                weight_names = [mod_name+'/'+n for n in layer.attrs['weight_names']]
-                if weight_names:
-                    layer_names += weight_names
+        
+        for layer in model_object.layers:
+            mod_name = layer.name
+            if layer.weights != []:
+                for weight in layer.weights:
+                    layer_names.append(mod_name+"/"+weight.name)
 
         model_parameter_dict = {}
-        for name in layer_names:
-            model_parameter_dict[name] = model[name]
+        for i, name in enumerate(layer_names):
+            model_parameter_dict[name] = weights[i]
 
         return self.init_model_from_dict( model_parameter_dict ), model_object
 
