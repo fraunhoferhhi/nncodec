@@ -72,7 +72,7 @@ source env/bin/activate
 
 **Note**: For further information on how to set up a virtual python environment (also on **Windows**) refer to https://docs.python.org/3/library/venv.html .
 
-When successfully installed, the software outputs the line : "Successfully installed NNC-0.3.0"
+When successfully installed, the software outputs the line : "Successfully installed NNC-0.3.1"
 
 ### Importing the main module
 
