@@ -238,7 +238,7 @@ class TensorFlowModel(nnc_core.nnr_model.NNRModel):
         try:
             model_file = tf.keras.models.load_model(model_path)
         except:
-        model_file = h5py.File(model_path, 'r')
+            model_file = h5py.File(model_path, 'r')
         
         try:
             if isinstance(model_file, dict):
