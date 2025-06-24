@@ -23,8 +23,7 @@ NNCodec provides an encoder and decoder with the following main features:
     The codebase for reproducing experimental results and evaluating NNCodec in an FL environment is available here:
 
     [![Conference](https://img.shields.io/badge/EuCNC-Paper-blue)](https://arxiv.org/abs/2504.01947)
-    [![Conference](https://img.shields.io/badge/EuCNC-Code(soon)-red)](https://github.com/d-becking/nncodec-fl-eucnc-2025)
-
+    [![Conference](https://img.shields.io/badge/EuCNC-Code-red)](https://github.com/d-becking/nncodec2)
 
 
 - ### ICML 2023 Neural Compression Workshop
