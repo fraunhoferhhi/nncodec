@@ -12,6 +12,20 @@ NNCodec provides an encoder and decoder with the following main features:
 
 ## Highlights
 
+- ### Presentation of NNCodec 2.0 beta at 151. MPEG Meeting
+  <img src="https://github.com/user-attachments/assets/741cb6e6-cc13-44e7-b8d0-96591cf92133" width="540"/>
+    
+  We announced a beta release of NNCodec 2.0, compliant with ISO/IEC 15938-17:2024 (2nd edition of NNC).
+  This version introduces several key enhancements:
+  - Support for high-level syntax (HLS) and (temporal) coding tools from the second edition of NNC, including parameter update tree (PUT), temporal context adaptation (TCA), sparsification techniques, low-precision quantization, …
+  - Easy integration / installation via PyPI: `pip install nncodec`
+  - Federated AI support via [*Flower*](https://flower.ai), a prominent and widely used federated learning framework
+  - Dedicated compression pipelines for (incremental) Neural Networks (NN), Tensors in AI-based Media Processing (TAIMP), and Federated Learning (FL) 
+    
+  [![Conference](https://img.shields.io/badge/NNCodec_2.0_beta-Code-red)](https://github.com/d-becking/nncodec2)
+  
+  **Note:** NNCodec 2.0 is currently in beta. We welcome feedback, bug reports, and contributions.
+
 
 - ### EuCNC 2025 Poster Session
     We present **"Efficient Federated Learning Tiny Language Models for Mobile Network Feature Prediction"** at the Poster Session I of the 2025 Joint European Conference on Networks and Communications & 6G Summit (EuCNC/6G Summit).
